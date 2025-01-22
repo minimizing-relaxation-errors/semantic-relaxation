@@ -1,5 +1,5 @@
-BENCHS = src/stack-dra src/queue-dra src/queue-ms_lb src/queue-wf src/queue-wf-ssmem src/queue-k-segment src/stack-elimination src/stack-k-segment src/stack-treiber src/2Dd-deque src/2Dc-counter src/2Dd-counter src/2Dc-stack src/2Dc-stack_optimized src/2Dc-stack_elastic-lpw src/2Dd-stack src/multi-stack_random-relaxed src/multi-counter-faa_random-relaxed src/multi-counter_random-relaxed  src/2Dd-queue src/2Dd-queue_optimized src/2Dd-queue_elastic-lpw src/2Dd-queue_elastic-law src/dcbo-ms src/simple-dcbo-ms src/dcbo-faaaq src/simple-dcbo-faaaq src/dcbo-lcrq src/simple-dcbo-lcrq src/dcbo-wfqueue src/simple-dcbo-wfqueue src/lcrq src/faaaq src/ms src/counter-cas src/single-faa
-
+BENCHS = src/stack-dra src/queue-dra src/queue-ms_lb src/queue-wf src/queue-wf-ssmem src/queue-k-segment src/stack-elimination src/stack-k-segment src/stack-treiber src/2Dc-counter src/2Dd-counter src/2Dc-stack src/2Dc-stack_optimized src/2Dc-stack_elastic-lpw src/2Dd-stack src/multi-stack_random-relaxed src/multi-counter-faa_random-relaxed src/multi-counter_random-relaxed  src/2Dd-queue src/2Dd-queue_optimized src/2Dd-queue_elastic-lpw src/2Dd-queue_elastic-law src/dcbo-ms src/simple-dcbo-ms src/dcbo-faaaq src/simple-dcbo-faaaq src/dcbo-lcrq src/simple-dcbo-lcrq src/dcbo-wfqueue src/simple-dcbo-wfqueue src/lcrq src/faaaq src/ms src/counter-cas src/single-faa
+# src/2Dd-deque
 
 .PHONY:	clean $(BENCHS)
 
@@ -55,8 +55,8 @@ simple-dcbo-wfqueue:
 simple-dcbl-wfqueue:
 	$(MAKE) "HEURISTIC=LENGTH" src/simple-dcbo-wfqueue
 
-2Dd-deque:
-	$(MAKE) src/2Dd-deque
+#2Dd-deque:
+#	$(MAKE) src/2Dd-deque
 
 stack-treiber:
 	$(MAKE) src/stack-treiber
@@ -126,7 +126,7 @@ single-faa:
 
 2D: 2Dc 2Dd
 2Dc: 2Dc-counter 2Dc-stack 2Dc-stack_optimized 2Dc-stack_elastic-lpw
-2Dd: 2Dd-counter 2Dd-stack 2Dd-queue_optimized 2Dd-queue 2Dd-queue_elastic-lpw 2Dd-queue_elastic-law 2Dd-deque
+2Dd: 2Dd-counter 2Dd-stack 2Dd-queue_optimized 2Dd-queue 2Dd-queue_elastic-lpw 2Dd-queue_elastic-law #2Dd-deque
 multi_ran: multi-ct-faa_ran multi-ct_ran multi-st_ran multi-ct_ran2c multi-st_ran2c multi-st_ran4c multi-ct_ran4c multi-st_ran8c multi-ct_ran8c
 external_queues: queue-ms_lb queue-wf queue-wf-ssmem queue-k-segment lcrq faaaq ms
 external_stacks: stack-treiber stack-elimination stack-k-segment
@@ -164,7 +164,7 @@ clean:
 	$(MAKE) -C src/ms clean
 	$(MAKE) -C src/lcrq clean
 
-	$(MAKE) -C src/2Dd-deque clean
+#	$(MAKE) -C src/2Dd-deque clean
 
 	$(MAKE) -C src/stack-treiber clean
 	$(MAKE) -C src/stack-elimination clean
