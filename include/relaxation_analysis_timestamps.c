@@ -201,6 +201,12 @@ void print_relaxation_measurements(int nbr_threads)
     if (tot_get == 0) rank_error_mean = 0.0;
     printf("mean_relaxation , %.4Lf\n", rank_error_mean);
     printf("max_relaxation , %zu\n", rank_error_max);
+    
+    // Print put time stamps
+    /*for(int i = 0; i <= sizeof(shared_put_stamps); i ++)
+    {
+        printf("Put timestamp: %lu\n", shared_put_stamps[i]->timestamp);
+    }*/
 
     // Find variance
     long double rank_error_variance = 0;
