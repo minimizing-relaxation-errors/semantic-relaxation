@@ -124,6 +124,7 @@ void* test(void* thread)
 	PF_INIT(3, SSPFD_NUM_ENTRIES, thread_id);
 #ifdef RELAXATION_TIMER_ANALYSIS
 	if (thread_id == 0) init_relaxation_analysis_shared(num_threads);
+	init_relaxation_analysis_local(thread_id);
 #endif
 
 	#if defined(COMPUTE_LATENCY)
