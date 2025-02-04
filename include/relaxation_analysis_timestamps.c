@@ -202,15 +202,11 @@ void print_relaxation_measurements(int nbr_threads)
     printf("mean_relaxation , %.4Lf\n", rank_error_mean);
     printf("max_relaxation , %zu\n", rank_error_max);
     
-    // Print put and get time stamps for operations across all threads
-    for(int i = 0; i < sizeof(shared_put_stamps) / sizeof(shared_put_stamps[0]); i ++)
+    // Print PUT time stamps for operations across all threads
+    for(int i = 0; i < nbr_threads; i ++)
     {
-        printf("Put timestamp: %lu\n", shared_put_stamps[i]->timestamp);
-    }
-    // Print get time stamps
-    for(int i = 0; i < sizeof(shared_get_stamps) / sizeof(shared_get_stamps[0]); i ++)
-    {
-        printf("Get timestamp: %lu\n", shared_get_stamps[i]->timestamp);
+        for(int j = 0; j < *shared_put_stamps_ind[i]; j++)
+            printf("Put timestamp for Thread %i: %lu\n", i, shared_put_stamps[i][j].timestamp);  
     }
 
     // Find variance
