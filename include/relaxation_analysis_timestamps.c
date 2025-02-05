@@ -209,6 +209,13 @@ void print_relaxation_measurements(int nbr_threads)
             printf("Put timestamp for Thread %i: %lu\n", i, shared_put_stamps[i][j].timestamp);  
     }
 
+    // Print GET time stamps for operations across all threads
+    for(int i = 0; i < nbr_threads; i ++)
+    {
+        for(int j = 0; j < *shared_get_stamps_ind[i]; j++)
+            printf("Get timestamp for Thread %i: %lu\n", i, shared_get_stamps[i][j].timestamp);  
+    }
+
     // Find variance
     long double rank_error_variance = 0;
     for (size_t deq_ind; deq_ind < tot_get; deq_ind += 1)
