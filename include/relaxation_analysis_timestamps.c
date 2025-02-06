@@ -201,20 +201,26 @@ void print_relaxation_measurements(int nbr_threads)
     if (tot_get == 0) rank_error_mean = 0.0;
     printf("mean_relaxation , %.4Lf\n", rank_error_mean);
     printf("max_relaxation , %zu\n", rank_error_max);
-    
-    // Print PUT time stamps for operations across all threads
+
+    FILE *fptr;
+    // Create a file
+    char filename[] = "../timestamps/timestamps-";
+    char time[30];
+    sprintf(time, "%lu", get_timestamp());
+    strcat(filename, time);
+    strcat(filename, ".txt");
+    fptr = fopen(filename, "w");
+
+    // Print PUT and GET time stamps for operations across all threads
     for(int i = 0; i < nbr_threads; i ++)
     {
         for(int j = 0; j < *shared_put_stamps_ind[i]; j++)
-            printf("Put timestamp for Thread %i: %lu\n", i, shared_put_stamps[i][j].timestamp);  
+            fprintf(fptr, "Put timestamp for Thread %i: %lu\n", i, shared_put_stamps[i][j].timestamp); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
+        for(int j = 0; j < *shared_get_stamps_ind[i]; j++)
+            fprintf(fptr, "Get timestamp for Thread %i: %lu\n", i, shared_put_stamps[i][j].timestamp); 
     }
 
-    // Print GET time stamps for operations across all threads
-    for(int i = 0; i < nbr_threads; i ++)
-    {
-        for(int j = 0; j < *shared_get_stamps_ind[i]; j++)
-            printf("Get timestamp for Thread %i: %lu\n", i, shared_get_stamps[i][j].timestamp);  
-    }
+    fclose(fptr); // Close the file
 
     // Find variance
     long double rank_error_variance = 0;
