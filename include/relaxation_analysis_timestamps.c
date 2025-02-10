@@ -212,13 +212,12 @@ void print_relaxation_measurements(int nbr_threads)
     printf("max_relaxation , %zu\n", rank_error_max);
 
     FILE *fptr;
-    // Create a file
+    //  Create a file
 
-    char filename[49]; // Exact name size
-    snprintf(filename, 49, "../timestamps/timestamps-%lu.txt", get_timestamp());
-    // sprintf(test, "../timestamps/timestamps-%lu.txt", get_timestamp());
-    printf("test %s \n", filename);
-    // printf("%lu \n", sizeof(test));
+    char filename[46]; // Exact name size
+    // Assumes there is a timestamps folder in base folder and that you run code from base folder
+    snprintf(filename, 46, "timestamps/timestamps-%lu.txt", get_timestamp());
+
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
     {
