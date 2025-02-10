@@ -214,9 +214,15 @@ void print_relaxation_measurements(int nbr_threads)
     FILE *fptr;
     // Create a file
 
-    char filename[60];
+    char filename[60]; // = "../timestamps/timestamps-.txt";
     snprintf(filename, 60, "../timestamps/timestamps-%lu.txt", get_timestamp());
-    fptr = fopen(filename, "w");
+    printf("test %s \n", filename);
+    fptr = fopen(filename, "w+");
+    if (fptr == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
 
     // Print PUT and GET time stamps for operations across all threads
     for (int i = 0; i < nbr_threads; i++)
