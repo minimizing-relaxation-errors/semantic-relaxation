@@ -214,9 +214,11 @@ void print_relaxation_measurements(int nbr_threads)
     FILE *fptr;
     // Create a file
 
-    char filename[60]; // = "../timestamps/timestamps-.txt";
-    snprintf(filename, 60, "../timestamps/timestamps-%lu.txt", get_timestamp());
+    char filename[49]; // Exact name size
+    snprintf(filename, 49, "../timestamps/timestamps-%lu.txt", get_timestamp());
+    // sprintf(test, "../timestamps/timestamps-%lu.txt", get_timestamp());
     printf("test %s \n", filename);
+    // printf("%lu \n", sizeof(test));
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
     {
