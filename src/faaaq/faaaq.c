@@ -4,16 +4,31 @@
 #include "relaxation_analysis_queue.c"
 #elif RELAXATION_TIMER_ANALYSIS
 #include "relaxation_analysis_timestamps.c"
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+#include "relaxation_linearization_timestamp.c"
 #endif
 
 // Want timers at FAA increments and not with the normal CAE
 #ifdef RELAXATION_TIMER_ANALYSIS
 uint64_t enq_timestamp, deq_timestamp;
-#define ENQ_TIMESTAMP (enq_timestamp = get_timestamp())
-#define DEQ_TIMESTAMP (deq_timestamp = get_timestamp())
+#define ENQ_TIMESTAMP (enq_timestamp = get_timestamp());
+#define DEQ_TIMESTAMP (deq_timestamp = get_timestamp());
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+uint64_t enq_start_timestamp, enq_end_timestamp;
+uint64_t deq_start_timestamp, deq_end_timestamp;
+#define ENQ_START_TIMESTAMP (enq_start_timestamp = get_timestamp());
+#define ENQ_END_TIMESTAMP (enq_end_timestamp = get_timestamp());
+#define DEQ_START_TIMESTAMP (deq_start_timestamp = get_timestamp());
+#define DEQ_END_TIMESTAMP (deq_end_timestamp = get_timestamp());
+#define ENQ_TIMESTAMP
+#define DEQ_TIMESTAMP
 #else
 #define ENQ_TIMESTAMP
 #define DEQ_TIMESTAMP
+#define ENQ_START_TIMESTAMP
+#define ENQ_END_TIMESTAMP
+#define DEQ_START_TIMESTAMP
+#define DEQ_END_TIMESTAMP
 #endif
 
 __thread ssmem_allocator_t *alloc;
@@ -48,6 +63,15 @@ static int enq_cae(volatile sval_t *item_loc, sval_t new_value)
         return true;
     }
     return false;
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+    // Use timers to track relaxation instead of locks
+    if (CAE(item_loc, &expected, &new_value))
+    {
+        // Save this count in a local array of (timestamp, )
+        add_relaxed_put(new_value, enq_start_timestamp, enq_end_timestamp);
+        return true;
+    }
+    return false;
 #elif RELAXATION_ANALYSIS
     lock_relaxation_lists();
 
@@ -78,6 +102,13 @@ static sval_t deq_swp(volatile sval_t *item_loc)
         add_relaxed_get(item, deq_timestamp);
     }
     return item;
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+    sval_t item = SWAP_U64(item_loc, TAKEN);
+    if (item != EMPTY)
+    {
+        add_relaxed_get(item, deq_start_timestamp, deq_end_timestamp);
+    }
+    return item;
 #elif RELAXATION_ANALYSIS
     lock_relaxation_lists();
     sval_t item = SWAP_U64(item_loc, TAKEN);
@@ -96,6 +127,7 @@ int faaaq_enqueue(faaaq_t *q, skey_t key, sval_t val)
 {
     while (true)
     {
+        ENQ_START_TIMESTAMP;
         segment_t *tail = q->tail;
         // Linearization point
         uint64_t idx = FAI_U64(&tail->enq_idx);
@@ -113,8 +145,11 @@ int faaaq_enqueue(faaaq_t *q, skey_t key, sval_t val)
                 if (CAE(&tail->next, &null_segment, &new_segment))
                 {
                     CAE(&q->tail, &tail, &new_segment);
+                    ENQ_END_TIMESTAMP;
 #ifdef RELAXATION_TIMER_ANALYSIS
                     add_relaxed_put(val, enq_timestamp);
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+                    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp);
 #endif
 
                     return 1;
@@ -129,6 +164,7 @@ int faaaq_enqueue(faaaq_t *q, skey_t key, sval_t val)
             }
             continue;
         }
+        ENQ_END_TIMESTAMP;
         if (enq_cae(&tail->items[idx], val))
         {
             return 1;
@@ -140,6 +176,7 @@ sval_t faaaq_dequeue(faaaq_t *q, uint64_t *double_collect_count)
 {
     while (true)
     { // ta en timestamp här när vi börjar
+        DEQ_START_TIMESTAMP;
         segment_t *head = q->head;
         if (head->deq_idx >= head->enq_idx && head->next == NULL)
             break;
@@ -162,9 +199,17 @@ sval_t faaaq_dequeue(faaaq_t *q, uint64_t *double_collect_count)
         sval_t item = deq_swp(&head->items[idx]);
         if (item != EMPTY)
         { // och en timestamp innan return
+            DEQ_END_TIMESTAMP;
+#ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+            add_relaxed_get(item, deq_start_timestamp, deq_end_timestamp);
+#endif
             return item;
         }
     }
+    DEQ_END_TIMESTAMP
+#ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+//   add_relaxed_get(NULL, deq_start_timestamp, deq_end_timestamp); //what to return if empty queue??
+#endif
     return 0;
 }
 

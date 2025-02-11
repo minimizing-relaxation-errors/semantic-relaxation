@@ -304,7 +304,7 @@
 			c = (uint32_t)(my_random(&(seeds[0]),&(seeds[1]),&(seeds[2])));						\
 			if (unlikely(c < scale_put))														\
 			{																					\
-				key = (c & rand_max) + rand_min;												\
+				key = (c & rand_max) + rand_min;			/* TODO: FIX */						\
 				int res;																		\
 				START_TS(1);																	\
 				res = DS_ADD(handle, key, key);													\

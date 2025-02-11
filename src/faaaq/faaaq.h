@@ -19,6 +19,8 @@
 
 #ifdef RELAXATION_TIMER_ANALYSIS
 #include "relaxation_analysis_timestamps.h"
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+#include "relaxation_linearization_timetamp.h"
 #elif RELAXATION_ANALYSIS
 #include "relaxation_analysis_queue.h"
 #endif
