@@ -219,7 +219,7 @@ void print_relaxation_measurements(int nbr_threads)
 
     char filename[46]; // Exact name size
     // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 46, "timestamps/timestamps-%lu.txt", get_timestamp());
+    snprintf(filename, 46, "timestamps/timestamps-%lu.csv", get_timestamp());
 
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
@@ -232,9 +232,9 @@ void print_relaxation_measurements(int nbr_threads)
     for (int i = 0; i < nbr_threads; i++)
     {
         for (int j = 0; j < *shared_put_stamps_ind[i]; j++)
-            fprintf(fptr, "%li PUT %lu %lu \n", shared_put_stamps[i][j].value, shared_put_stamps[i][j].start, shared_put_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
+            fprintf(fptr, "%li,PUT,%lu,%lu\n", shared_put_stamps[i][j].value, shared_put_stamps[i][j].start, shared_put_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
         for (int j = 0; j < *shared_get_stamps_ind[i]; j++)
-            fprintf(fptr, "%li GET %lu %lu \n", shared_get_stamps[i][j].value, shared_get_stamps[i][j].start, shared_get_stamps[i][j].end);
+            fprintf(fptr, "%li,GET,%lu,%lu\n", shared_get_stamps[i][j].value, shared_get_stamps[i][j].start, shared_get_stamps[i][j].end);
     }
 
     fclose(fptr); // Close the file
