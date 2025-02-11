@@ -13,7 +13,8 @@
 // The record for a single operation
 typedef struct relax_stamp
 {
-    uint64_t timestamp;
+    uint64_t start;
+    uint64_t end;
     sval_t value;
 } relax_stamp_t;
 
@@ -23,10 +24,10 @@ typedef struct relax_stamp
 uint64_t get_timestamp();
 
 // Add a put operation of a value with its timestamp
-void add_relaxed_put(sval_t val, uint64_t timestamp);
+void add_relaxed_put(sval_t val, uint64_t start, uint64_t end);
 
 // Add a get operation of a value with its timestamp
-void add_relaxed_get(sval_t val, uint64_t timestamp);
+void add_relaxed_get(sval_t val, uint64_t start, uint64_t end);
 
 // Init the relaxation analysis, global variables before the thread local one
 void init_relaxation_analysis_shared(int nbr_threads);

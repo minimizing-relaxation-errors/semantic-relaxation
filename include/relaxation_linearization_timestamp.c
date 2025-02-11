@@ -1,5 +1,4 @@
-
-#include "relaxation_analysis_timestamps.h"
+#include "relaxation_linearization_timetamp.h"
 
 // Thread local arrays for storing records
 __thread relax_stamp_t *thread_put_stamps;
@@ -22,10 +21,11 @@ uint64_t get_timestamp()
 }
 
 // Add a put operation of a value with its timestamp
-void add_relaxed_put(sval_t val, uint64_t timestamp)
+void add_relaxed_put(sval_t val, uint64_t start, uint64_t end)
 {
     relax_stamp_t stamp;
-    stamp.timestamp = timestamp;
+    stamp.start = start;
+    stamp.end = end;
     stamp.value = val;
     thread_put_stamps[*thread_put_stamps_ind] = stamp;
     *thread_put_stamps_ind += 1;
@@ -37,10 +37,11 @@ void add_relaxed_put(sval_t val, uint64_t timestamp)
 }
 
 // Add a get operation of a value with its timestamp
-void add_relaxed_get(sval_t val, uint64_t timestamp)
+void add_relaxed_get(sval_t val, uint64_t timestamp1, uint64_t timestamp2)
 {
     relax_stamp_t stamp;
-    stamp.timestamp = timestamp;
+    stamp.end = timestamp1;
+    stamp.start = timestamp2;
     stamp.value = val;
     thread_get_stamps[*thread_get_stamps_ind] = stamp;
     *thread_get_stamps_ind += 1;
@@ -95,7 +96,7 @@ void destoy_relaxation_analysis_all(int nbr_threads)
     free(shared_get_stamps_ind);
 }
 
-int compare_timestamps(const void *a, const void *b)
+/*int compare_timestamps(const void *a, const void *b)
 {
     const relax_stamp_t *stamp1 = (const relax_stamp_t *)a;
     const relax_stamp_t *stamp2 = (const relax_stamp_t *)b;
@@ -104,9 +105,9 @@ int compare_timestamps(const void *a, const void *b)
     if (stamp1->timestamp > stamp2->timestamp)
         return 1;
     return 0;
-}
+}*/
 
-relax_stamp_t *combine_sort_relaxed_stamps(int nbr_threads, relax_stamp_t **stamps, size_t **counts, size_t *tot_counts_out)
+/*relax_stamp_t *combine_sort_relaxed_stamps(int nbr_threads, relax_stamp_t **stamps, size_t **counts, size_t *tot_counts_out)
 {
     *tot_counts_out = 0;
     for (int thread = 0; thread < nbr_threads; thread += 1)
@@ -134,7 +135,7 @@ relax_stamp_t *combine_sort_relaxed_stamps(int nbr_threads, relax_stamp_t **stam
     qsort(combined_stamps, *tot_counts_out, sizeof(relax_stamp_t), compare_timestamps);
 
     return combined_stamps;
-}
+}*/
 
 struct item_list
 {
@@ -145,11 +146,12 @@ struct item_list
 // Print the stats from the relaxation measurement. Also destroys all memory
 void print_relaxation_measurements(int nbr_threads)
 {
+    /*
     // Sort all enqueue and dequeue operations in ascending order by time
     size_t tot_put, tot_get;
 
-    relax_stamp_t *combined_put_stamps = combine_sort_relaxed_stamps(nbr_threads, shared_put_stamps, shared_put_stamps_ind, &tot_put);
-    relax_stamp_t *combined_get_stamps = combine_sort_relaxed_stamps(nbr_threads, shared_get_stamps, shared_get_stamps_ind, &tot_get);
+    // relax_stamp_t *combined_put_stamps = combine_sort_relaxed_stamps(nbr_threads, shared_put_stamps, shared_put_stamps_ind, &tot_put);
+    // relax_stamp_t *combined_get_stamps = combine_sort_relaxed_stamps(nbr_threads, shared_get_stamps, shared_get_stamps_ind, &tot_get);
 
     uint64_t rank_error_sum = 0;
     uint64_t rank_error_max = 0;
@@ -211,7 +213,32 @@ void print_relaxation_measurements(int nbr_threads)
         rank_error_mean = 0.0;
     printf("mean_relaxation , %.4Lf\n", rank_error_mean);
     printf("max_relaxation , %zu\n", rank_error_max);
+    */
+    FILE *fptr;
+    //  Create a file
 
+    char filename[46]; // Exact name size
+    // Assumes there is a timestamps folder in base folder and that you run code from base folder
+    snprintf(filename, 46, "timestamps/timestamps-%lu.txt", get_timestamp());
+
+    fptr = fopen(filename, "w+");
+    if (fptr == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    // Print PUT and GET time stamps for operations across all threads
+    for (int i = 0; i < nbr_threads; i++)
+    {
+        for (int j = 0; j < *shared_put_stamps_ind[i]; j++)
+            fprintf(fptr, "%li PUT %lu \n", shared_get_stamps[i][j].value, shared_put_stamps[i][j].start); //, shared_get_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
+        for (int j = 0; j < *shared_get_stamps_ind[i]; j++)
+            fprintf(fptr, "%li GET %lu \n", shared_get_stamps[i][j].value, shared_get_stamps[i][j].start); //, shared_get_stamps[i][j].end);
+    }
+
+    fclose(fptr); // Close the file
+    /*
     // Find variance
     long double rank_error_variance = 0;
     for (size_t deq_ind; deq_ind < tot_get; deq_ind += 1)
@@ -228,4 +255,5 @@ void print_relaxation_measurements(int nbr_threads)
     free(combined_get_stamps);
     free(combined_put_stamps);
     destoy_relaxation_analysis_all(nbr_threads);
+    */
 }
