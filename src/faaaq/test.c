@@ -125,6 +125,9 @@ void* test(void* thread)
 #ifdef RELAXATION_TIMER_ANALYSIS
 	if (thread_id == 0) init_relaxation_analysis_shared(num_threads);
 	init_relaxation_analysis_local(thread_id);
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+	if (thread_id == 0) init_relaxation_analysis_shared(num_threads);
+	init_relaxation_analysis_local(thread_id);
 #endif
 
 	#if defined(COMPUTE_LATENCY)
@@ -169,9 +172,10 @@ void* test(void* thread)
 	#endif
 	for(i = 0; i < num_elems_thread; i++)
     {
+		// TODO: ÄNDRA
 		key = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % (rand_max + 1)) + rand_min;
 
-		if(DS_ADD(handle, key, key) == false)
+		if(DS_ADD(handle, key, key) == false)		// Prefill
 		{
 			i--;
 		}
@@ -553,6 +557,8 @@ int main(int argc, char **argv)
 	LATENCY_DISTRIBUTION_PRINT();
 
 	#ifdef RELAXATION_TIMER_ANALYSIS
+		print_relaxation_measurements(num_threads);
+	#elif RELAXATION_LINEARIZATION_TIMESTAMP
 		print_relaxation_measurements(num_threads);
 	#elif RELAXATION_ANALYSIS
 		print_relaxation_measurements();
