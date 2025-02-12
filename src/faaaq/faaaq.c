@@ -104,10 +104,6 @@ static sval_t deq_swp(volatile sval_t *item_loc)
     return item;
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
     sval_t item = SWAP_U64(item_loc, TAKEN);
-    if (item != EMPTY)
-    {
-        add_relaxed_get(item, deq_start_timestamp, deq_end_timestamp);
-    }
     return item;
 #elif RELAXATION_ANALYSIS
     lock_relaxation_lists();
