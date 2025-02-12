@@ -217,9 +217,9 @@ void print_relaxation_measurements(int nbr_threads)
     FILE *fptr;
     //  Create a file
 
-    char filename[46]; // Exact name size
+    char filename[57]; // Exact name size
     // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 46, "../LinTool/timestamps/timestamps-%lu.csv", get_timestamp());
+    snprintf(filename, 57, "../LinTool/timestamps/timestamps-%lu.csv", get_timestamp());
 
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
