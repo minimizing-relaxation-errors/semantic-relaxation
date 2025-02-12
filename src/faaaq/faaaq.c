@@ -206,10 +206,6 @@ sval_t faaaq_dequeue(faaaq_t *q, uint64_t *double_collect_count)
             return item;
         }
     }
-    DEQ_END_TIMESTAMP
-#ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-//   add_relaxed_get(NULL, deq_start_timestamp, deq_end_timestamp); //what to return if empty queue??
-#endif
     return 0;
 }
 
