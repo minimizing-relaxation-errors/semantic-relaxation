@@ -561,7 +561,7 @@ int main(int argc, char **argv)
 #ifdef RELAXATION_TIMER_ANALYSIS
 	print_relaxation_measurements(num_threads);
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-	print_relaxation_measurements(num_threads);
+	print_relaxation_measurements(num_threads, "dcbo");
 #elif RELAXATION_ANALYSIS
 	print_relaxation_measurements();
 #else

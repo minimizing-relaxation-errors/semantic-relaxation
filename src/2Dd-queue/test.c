@@ -594,7 +594,7 @@ int main(int argc, char **argv)
 #if defined(RELAXATION_ANALYSIS)
 	print_relaxation_measurements();
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-	print_relaxation_measurements(num_threads);
+	print_relaxation_measurements(num_threads, "2Ddq");
 #endif
 
 	pthread_exit(NULL);

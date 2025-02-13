@@ -39,6 +39,6 @@ void init_relaxation_analysis_local(int thread_id);
 void destoy_relaxation_analysis_all(int nbr_threads);
 
 // Print the stats from the relaxation measurement
-void print_relaxation_measurements(int nbr_threads);
+void print_relaxation_measurements(int nbr_threads, char queue[]);
 
 #endif

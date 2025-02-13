@@ -144,7 +144,7 @@ struct item_list
 };
 
 // Print the stats from the relaxation measurement. Also destroys all memory
-void print_relaxation_measurements(int nbr_threads)
+void print_relaxation_measurements(int nbr_threads, char queue[4])
 {
     /*
     // Sort all enqueue and dequeue operations in ascending order by time
@@ -217,9 +217,9 @@ void print_relaxation_measurements(int nbr_threads)
     FILE *fptr;
     //  Create a file
 
-    char filename[57]; // Exact name size
+    char filename[62]; // Exact name size
     // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 57, "../LinTool/timestamps/timestamps-%lu.csv", get_timestamp());
+    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, get_timestamp());
 
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
