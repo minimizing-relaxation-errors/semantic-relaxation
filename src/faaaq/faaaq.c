@@ -13,6 +13,10 @@
 uint64_t enq_timestamp, deq_timestamp;
 #define ENQ_TIMESTAMP (enq_timestamp = get_timestamp());
 #define DEQ_TIMESTAMP (deq_timestamp = get_timestamp());
+#define DEQ_START_TIMESTAMP
+#define DEQ_END_TIMESTAMP
+#define ENQ_START_TIMESTAMP
+#define ENQ_END_TIMESTAMP
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
 uint64_t enq_start_timestamp, enq_end_timestamp;
 uint64_t deq_start_timestamp, deq_end_timestamp;
