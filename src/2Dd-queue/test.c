@@ -43,7 +43,7 @@
 #if defined(RELAXATION_ANALYSIS)
 // #include "relaxation_analysis_queue.h"
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timetamp.h"
+#include "relaxation_linearization_timetamps.h"
 #endif
 
 /* ################################################################### *

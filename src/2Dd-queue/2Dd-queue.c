@@ -6,7 +6,7 @@
 #elif RELAXATION_ANALYSIS
 #include "relaxation_analysis_queue.c"
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timestamp.c"
+#include "relaxation_linearization_timestamps.c"
 #endif
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP

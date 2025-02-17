@@ -1,7 +1,7 @@
 #include "d-balanced-queue.h"
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timestamp.c"
+#include "relaxation_linearization_timestamps.c"
 #endif
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP

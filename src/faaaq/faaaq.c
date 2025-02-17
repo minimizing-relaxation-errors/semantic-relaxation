@@ -5,7 +5,7 @@
 #elif RELAXATION_TIMER_ANALYSIS
 #include "relaxation_analysis_timestamps.c"
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timestamp.c"
+#include "relaxation_linearization_timestamps.c"
 #endif
 
 // Want timers at FAA increments and not with the normal CAE

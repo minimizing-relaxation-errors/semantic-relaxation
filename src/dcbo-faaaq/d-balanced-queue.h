@@ -18,7 +18,7 @@
 #include "utils.h"
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timetamp.h"
+#include "relaxation_linearization_timetamps.h"
 #endif
 // Include specific partial queue
 #include "partial-faaaq.h"
