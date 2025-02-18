@@ -42,6 +42,10 @@
 #include "2Dd-queue_optimized.h"
 #define SPECIFIC_TEST_LOOP() TEST_LOOP_ONLY_UPDATES()
 
+#ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+#include "relaxation_linearization_timetamps.h"
+#endif
+
 /* ################################################################### *
  * GLOBALS
  * ################################################################### */
@@ -132,7 +136,6 @@ void *test(void *thread)
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
 	if (thread_id == 0)
 		init_relaxation_analysis_shared(num_threads);
-	init_relaxation_analysis_local(thread_id);
 #endif
 	PF_INIT(3, SSPFD_NUM_ENTRIES, thread_id);
 
@@ -161,6 +164,8 @@ void *test(void *thread)
 	DS_HANDLE handle = DS_REGISTER(set, thread_id);
 
 #ifdef RELAXATION_TIMER_ANALYSIS
+	init_relaxation_analysis_local(thread_id);
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
 	init_relaxation_analysis_local(thread_id);
 #endif
 
