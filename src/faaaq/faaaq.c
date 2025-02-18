@@ -245,12 +245,17 @@ faaaq_t *create_faaaq_queue(int thread_id)
 
 size_t faaaq_queue_size(faaaq_t *q)
 {
-    uint64_t enq_count = faaaq_enq_count(q);
-    uint64_t deq_count = faaaq_deq_count(q);
-
-    if (enq_count < deq_count)
-        return 0;
-    return enq_count - deq_count;
+    size_t size = 0;
+    segment_t* node = q->head;
+    while (node) {
+        for (int idx = 0; idx < BUFFER_SIZE; idx += 1) {
+            if (node->items[idx] != EMPTY && node->items[idx] != TAKEN) {
+                size += 1;
+            }
+        }
+        node = node->next;
+    }
+    return size;
 }
 
 uint64_t faaaq_enq_count(faaaq_t *q)
