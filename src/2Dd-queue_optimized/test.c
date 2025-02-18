@@ -1,12 +1,12 @@
 /*
-	*   Author: Kåre von Geijer
-	*
-	* This program is distributed in the hope that it will be useful,
-	* but WITHOUT ANY WARRANTY; without even the implied warranty of
-	* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	* GNU General Public License for more details.
-	*
-*/
+ *   Author: Kåre von Geijer
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
 
 #include <assert.h>
 #include <getopt.h>
@@ -30,21 +30,21 @@
 
 #include "rapl_read.h"
 #ifdef __sparc__
-	#include <sys/types.h>
-	#include <sys/processor.h>
-	#include <sys/procset.h>
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
 #endif
 
 #if !defined(VALIDATESIZE)
-	#define VALIDATESIZE 1
+#define VALIDATESIZE 1
 #endif
 
 #include "2Dd-queue_optimized.h"
-#define SPECIFIC_TEST_LOOP()	TEST_LOOP_ONLY_UPDATES()
+#define SPECIFIC_TEST_LOOP() TEST_LOOP_ONLY_UPDATES()
 
 /* ################################################################### *
-	* GLOBALS
-* ################################################################### */
+ * GLOBALS
+ * ################################################################### */
 
 RETRY_STATS_VARS_GLOBAL;
 
@@ -89,15 +89,14 @@ volatile ticks *removing_count;
 volatile ticks *removing_count_succ;
 volatile ticks *total;
 
-
 /* ################################################################### *
-	* LOCALS
-* ################################################################### */
+ * LOCALS
+ * ################################################################### */
 
 #ifdef DEBUG
-	extern __thread uint32_t put_num_restarts;
-	extern __thread uint32_t put_num_failed_expand;
-	extern __thread uint32_t put_num_failed_on_new;
+extern __thread uint32_t put_num_restarts;
+extern __thread uint32_t put_num_failed_expand;
+extern __thread uint32_t put_num_failed_on_new;
 #endif
 
 __thread unsigned long *seeds;
@@ -113,41 +112,46 @@ barrier_t barrier, barrier_global;
 typedef struct thread_data
 {
 	uint32_t id;
-	DS_TYPE* set;
+	DS_TYPE *set;
 } thread_data_t;
 
-void* test(void* thread)
+void *test(void *thread)
 {
 	// Main function for each new test thread
 
-	thread_data_t* td = (thread_data_t*) thread;
-	thread_id=td->id;
-	set_cpu(thread_id);		// Pin the thread to some hardware thread
+	thread_data_t *td = (thread_data_t *)thread;
+	thread_id = td->id;
+	set_cpu(thread_id); // Pin the thread to some hardware thread
 
-	DS_TYPE* set = td->set;
+	DS_TYPE *set = td->set;
 
 	THREAD_INIT(thread_id);
 #ifdef RELAXATION_TIMER_ANALYSIS
-	if (thread_id == 0) init_relaxation_analysis_shared(num_threads);
+	if (thread_id == 0)
+		init_relaxation_analysis_shared(num_threads);
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+	if (thread_id == 0)
+		init_relaxation_analysis_shared(num_threads);
+	init_relaxation_analysis_local(thread_id);
 #endif
 	PF_INIT(3, SSPFD_NUM_ENTRIES, thread_id);
 
-	#if defined(COMPUTE_LATENCY)
-		volatile ticks my_putting_succ = 0;
-		volatile ticks my_putting_fail = 0;
-		volatile ticks my_removing_succ = 0;
-		volatile ticks my_removing_fail = 0;
-	#endif
+#if defined(COMPUTE_LATENCY)
+	volatile ticks my_putting_succ = 0;
+	volatile ticks my_putting_fail = 0;
+	volatile ticks my_removing_succ = 0;
+	volatile ticks my_removing_fail = 0;
+#endif
 	uint64_t my_putting_count = 0;
 	uint64_t my_removing_count = 0;
 
 	uint64_t my_putting_count_succ = 0;
 	uint64_t my_removing_count_succ = 0;
 
-	#if defined(COMPUTE_LATENCY) && PFD_TYPE == 0
-		volatile ticks start_acq, end_acq;
-		volatile ticks correction = getticks_correction_calc();
-	#endif
+#if defined(COMPUTE_LATENCY) && PFD_TYPE == 0
+	volatile ticks start_acq, end_acq;
+	volatile ticks correction = getticks_correction_calc();
+#endif
 
 	seeds = seed_rand();
 
@@ -162,26 +166,26 @@ void* test(void* thread)
 
 	uint64_t key;
 	int c = 0;
-	uint32_t scale_rem = (uint32_t) (update_rate * UINT_MAX);
-	uint32_t scale_put = (uint32_t) (put_rate * UINT_MAX);
+	uint32_t scale_rem = (uint32_t)(update_rate * UINT_MAX);
+	uint32_t scale_put = (uint32_t)(put_rate * UINT_MAX);
 
 	int i;
-	uint32_t num_elems_thread = (uint32_t) (initial / num_threads);
-	int32_t missing = (uint32_t) initial - (num_elems_thread * num_threads);
+	uint32_t num_elems_thread = (uint32_t)(initial / num_threads);
+	int32_t missing = (uint32_t)initial - (num_elems_thread * num_threads);
 	if (thread_id < missing)
-    {
+	{
 		num_elems_thread++;
 	}
 
-	#if INITIALIZE_FROM_ONE == 1
-		num_elems_thread = (thread_id == 0) * initial;
-	#endif
-	for(i = 0; i < num_elems_thread; i++)
-    {
-		//key = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % (rand_max + 1)) + rand_min;
-		key = (i+1) << 8 | thread_id;
+#if INITIALIZE_FROM_ONE == 1
+	num_elems_thread = (thread_id == 0) * initial;
+#endif
+	for (i = 0; i < num_elems_thread; i++)
+	{
+		// key = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % (rand_max + 1)) + rand_min;
+		key = (i + 1) << 8 | thread_id;
 
-		if(DS_ADD(handle, key, key) == false)
+		if (DS_ADD(handle, key, key) == false)
 		{
 			i--;
 		}
@@ -190,57 +194,57 @@ void* test(void* thread)
 	MEM_BARRIER;
 	barrier_cross(&barrier);
 	if (!thread_id)
-    {
-		printf("BEFORE size is, %zu\n", (size_t) DS_SIZE(set));
+	{
+		printf("BEFORE size is, %zu\n", (size_t)DS_SIZE(set));
 	}
 
 	RETRY_STATS_ZERO();
 	barrier_cross(&barrier_global);
 	RR_START_SIMPLE();
 	while (stop == 0)
-    {
+	{
 		SPECIFIC_TEST_LOOP();
 	}
 	barrier_cross(&barrier);
 	RR_STOP_SIMPLE();
 	if (!thread_id)
-    {
+	{
 		size_after = DS_SIZE(set);
 		printf("AFTER size is, %zu \n", size_after);
 	}
 
 	barrier_cross(&barrier);
 
-	#if defined(COMPUTE_LATENCY)
-		putting_succ[thread_id] += my_putting_succ;
-		putting_fail[thread_id] += my_putting_fail;
-		removing_succ[thread_id] += my_removing_succ;
-		removing_fail[thread_id] += my_removing_fail;
-	#endif
+#if defined(COMPUTE_LATENCY)
+	putting_succ[thread_id] += my_putting_succ;
+	putting_fail[thread_id] += my_putting_fail;
+	removing_succ[thread_id] += my_removing_succ;
+	removing_fail[thread_id] += my_removing_fail;
+#endif
 	putting_count[thread_id] += my_putting_count;
-	removing_count[thread_id]+= my_removing_count;
+	removing_count[thread_id] += my_removing_count;
 
 	putting_count_succ[thread_id] += my_putting_count_succ;
-	removing_count_succ[thread_id]+= my_removing_count_succ;
+	removing_count_succ[thread_id] += my_removing_count_succ;
 
-	put_cas_fail_count[thread_id]=my_put_cas_fail_count;
-	get_cas_fail_count[thread_id]=my_get_cas_fail_count;
-	null_count[thread_id]=my_null_count;
-	hop_count[thread_id]=my_hop_count;
-	slide_count[thread_id]=my_slide_count;
+	put_cas_fail_count[thread_id] = my_put_cas_fail_count;
+	get_cas_fail_count[thread_id] = my_get_cas_fail_count;
+	null_count[thread_id] = my_null_count;
+	hop_count[thread_id] = my_hop_count;
+	slide_count[thread_id] = my_slide_count;
 
 	EXEC_IN_DEC_ID_ORDER(thread_id, num_threads)
-    {
+	{
 		print_latency_stats(thread_id, SSPFD_NUM_ENTRIES, print_vals_num);
 		RETRY_STATS_SHARE();
 	}
 	EXEC_IN_DEC_ID_ORDER_END(&barrier);
 
 	SSPFDTERM();
-	#if GC == 1
-		ssmem_term();
-		free(alloc);
-	#endif
+#if GC == 1
+	ssmem_term();
+	free(alloc);
+#endif
 	THREAD_END();
 	pthread_exit(NULL);
 }
@@ -252,122 +256,124 @@ int main(int argc, char **argv)
 
 	struct option long_options[] = {
 		// These options don't set a flag
-		{"help",                      no_argument,       NULL, 'h'},
-		{"duration",                  required_argument, NULL, 'd'},
-		{"initial-size",              required_argument, NULL, 'i'},
-		{"num-threads",               required_argument, NULL, 'n'},
-		{"range",                     required_argument, NULL, 'r'},
-		{"update-rate",               required_argument, NULL, 'u'},
-		{"num-buckets",               required_argument, NULL, 'b'},
-		{"print-vals",                required_argument, NULL, 'v'},
-		{"vals-pf",                   required_argument, NULL, 'f'},
-		{NULL, 0, NULL, 0}
-	};
+		{"help", no_argument, NULL, 'h'},
+		{"duration", required_argument, NULL, 'd'},
+		{"initial-size", required_argument, NULL, 'i'},
+		{"num-threads", required_argument, NULL, 'n'},
+		{"range", required_argument, NULL, 'r'},
+		{"update-rate", required_argument, NULL, 'u'},
+		{"num-buckets", required_argument, NULL, 'b'},
+		{"print-vals", required_argument, NULL, 'v'},
+		{"vals-pf", required_argument, NULL, 'f'},
+		{NULL, 0, NULL, 0}};
 
 	int i, c;
-	while(1)
-    {
+	while (1)
+	{
 		i = 0;
 		c = getopt_long(argc, argv, "hAf:d:i:n:r:u:m:a:l:p:b:v:f:y:z:k:w:s:", long_options, &i);
-		if(c == -1)
-		break;
-		if(c == 0 && long_options[i].flag == 0)
-		c = long_options[i].val;
-		switch(c)
+		if (c == -1)
+			break;
+		if (c == 0 && long_options[i].flag == 0)
+			c = long_options[i].val;
+		switch (c)
 		{
-			case 0:
+		case 0:
 			/* Flag is automatically set */
 			break;
-			case 'h':
+		case 'h':
 			printf("ASCYLIB -- stress test "
-			"\n"
-			"\n"
-			"Usage:\n"
-			"  %s [options...]\n"
-			"\n"
-			"Options:\n"
-			"  -h, --help\n"
-			"        Print this message\n"
-			"  -d, --duration <int>\n"
-			"        Test duration in milliseconds\n"
-			"  -i, --initial-size <int>\n"
-			"        Number of elements to insert before test\n"
-			"  -n, --num-threads <int>\n"
-			"        Number of threads\n"
-			"  -r, --range <int>\n"
-			"        Range of integer values inserted in set\n"
-			"  -u, --update-rate <int>\n"
-			"        Percentage of update transactions\n"
-			"  -p, --put-rate <int>\n"
-			"        Percentage of put update transactions (should be less than percentage of updates)\n"
-			"  -b, --num-buckets <int>\n"
-			"        Number of initial buckets (stronger than -l)\n"
-			"  -v, --print-vals <int>\n"
-			"        When using detailed profiling, how many values to print.\n"
-			"  -f, --val-pf <int>\n"
-			"        When using detailed profiling, how many values to keep track of.\n"
-			"  -s, --side-work <int>\n"
-			"        thread work between data structure access operations.\n"
-			"  -k, --Relaxation-bound <int>\n"
-			"        Relaxation bound.\n"
-			"  -l, --Depth <int>\n"
-			"        Locality/Depth if k-mode is set to zero.\n"
-			"  -w, --Width <int>\n"
-			"        Fixed Width or Width to thread ratio depending on the k-mode.\n"
-			"  -m, --K Mode <int>\n"
-			"        0 for Fixed Width and Depth, 1 for Fixed Width, 2 for fixed Depth, 3 for fixed Width to thread ratio.\n"
-			, argv[0]);
+				   "\n"
+				   "\n"
+				   "Usage:\n"
+				   "  %s [options...]\n"
+				   "\n"
+				   "Options:\n"
+				   "  -h, --help\n"
+				   "        Print this message\n"
+				   "  -d, --duration <int>\n"
+				   "        Test duration in milliseconds\n"
+				   "  -i, --initial-size <int>\n"
+				   "        Number of elements to insert before test\n"
+				   "  -n, --num-threads <int>\n"
+				   "        Number of threads\n"
+				   "  -r, --range <int>\n"
+				   "        Range of integer values inserted in set\n"
+				   "  -u, --update-rate <int>\n"
+				   "        Percentage of update transactions\n"
+				   "  -p, --put-rate <int>\n"
+				   "        Percentage of put update transactions (should be less than percentage of updates)\n"
+				   "  -b, --num-buckets <int>\n"
+				   "        Number of initial buckets (stronger than -l)\n"
+				   "  -v, --print-vals <int>\n"
+				   "        When using detailed profiling, how many values to print.\n"
+				   "  -f, --val-pf <int>\n"
+				   "        When using detailed profiling, how many values to keep track of.\n"
+				   "  -s, --side-work <int>\n"
+				   "        thread work between data structure access operations.\n"
+				   "  -k, --Relaxation-bound <int>\n"
+				   "        Relaxation bound.\n"
+				   "  -l, --Depth <int>\n"
+				   "        Locality/Depth if k-mode is set to zero.\n"
+				   "  -w, --Width <int>\n"
+				   "        Fixed Width or Width to thread ratio depending on the k-mode.\n"
+				   "  -m, --K Mode <int>\n"
+				   "        0 for Fixed Width and Depth, 1 for Fixed Width, 2 for fixed Depth, 3 for fixed Width to thread ratio.\n",
+				   argv[0]);
 			exit(0);
-			case 'd':
+		case 'd':
 			duration = atoi(optarg);
 			break;
-			case 'i':
+		case 'i':
 			initial = atoi(optarg);
 			break;
-			case 'n':
+		case 'n':
 			num_threads = atoi(optarg);
 			break;
-			case 'r':
+		case 'r':
 			range = atol(optarg);
 			break;
-			case 'u':
+		case 'u':
 			update = atoi(optarg);
 			break;
-			case 'p':
+		case 'p':
 			put_explicit = 1;
 			put = atoi(optarg);
 			break;
-			case 'v':
+		case 'v':
 			print_vals_num = atoi(optarg);
 			break;
-			case 'f':
+		case 'f':
 			pf_vals_num = pow2roundup(atoi(optarg)) - 1;
 			break;
-			case 's':
+		case 's':
 			side_work = atoi(optarg);
 			break;
-			case 'k':
-			if(atoi(optarg)>0) relaxation_bound = atoi(optarg);
+		case 'k':
+			if (atoi(optarg) > 0)
+				relaxation_bound = atoi(optarg);
 			break;
-			case 'l':
-			if(atoi(optarg)>0) depth = atoi(optarg);
+		case 'l':
+			if (atoi(optarg) > 0)
+				depth = atoi(optarg);
 			break;
-			case 'w':
-			if(atoi(optarg)>0) width = atoi(optarg);
+		case 'w':
+			if (atoi(optarg) > 0)
+				width = atoi(optarg);
 			break;
-			case 'm':
-			if(atoi(optarg)<=3) k_mode = atoi(optarg);
+		case 'm':
+			if (atoi(optarg) <= 3)
+				k_mode = atoi(optarg);
 			break;
 			break;
-			case '?':
-			default:
+		case '?':
+		default:
 			printf("Use -h or --help for help\n");
 			exit(1);
 		}
 	}
 
-    thread_id = num_threads;
-
+	thread_id = num_threads;
 
 	if (!is_power_of_two(initial))
 	{
@@ -421,30 +427,30 @@ int main(int argc, char **argv)
 	timeout.tv_nsec = (duration % 1000) * 1000000;
 	stop = 0;
 
-	DS_TYPE* set = DS_NEW(num_threads, width, depth, k_mode, relaxation_bound, thread_id);
+	DS_TYPE *set = DS_NEW(num_threads, width, depth, k_mode, relaxation_bound, thread_id);
 	assert(set != NULL);
 
 	/* Initializes the local data */
-	putting_succ = (ticks *) calloc(num_threads , sizeof(ticks));
-	putting_fail = (ticks *) calloc(num_threads , sizeof(ticks));
-	removing_succ = (ticks *) calloc(num_threads , sizeof(ticks));
-	removing_fail = (ticks *) calloc(num_threads , sizeof(ticks));
-	putting_count = (ticks *) calloc(num_threads , sizeof(ticks));
-	putting_count_succ = (ticks *) calloc(num_threads , sizeof(ticks));
-	removing_count = (ticks *) calloc(num_threads , sizeof(ticks));
-	removing_count_succ = (ticks *) calloc(num_threads , sizeof(ticks));
-	put_cas_fail_count = (unsigned long *) calloc(num_threads , sizeof(unsigned long));
-	get_cas_fail_count = (unsigned long *) calloc(num_threads , sizeof(unsigned long));
-	null_count = (unsigned long *) calloc(num_threads , sizeof(unsigned long));
-	slide_count = (unsigned long *) calloc(num_threads , sizeof(unsigned long));
-	hop_count = (unsigned long *) calloc(num_threads , sizeof(unsigned long));
+	putting_succ = (ticks *)calloc(num_threads, sizeof(ticks));
+	putting_fail = (ticks *)calloc(num_threads, sizeof(ticks));
+	removing_succ = (ticks *)calloc(num_threads, sizeof(ticks));
+	removing_fail = (ticks *)calloc(num_threads, sizeof(ticks));
+	putting_count = (ticks *)calloc(num_threads, sizeof(ticks));
+	putting_count_succ = (ticks *)calloc(num_threads, sizeof(ticks));
+	removing_count = (ticks *)calloc(num_threads, sizeof(ticks));
+	removing_count_succ = (ticks *)calloc(num_threads, sizeof(ticks));
+	put_cas_fail_count = (unsigned long *)calloc(num_threads, sizeof(unsigned long));
+	get_cas_fail_count = (unsigned long *)calloc(num_threads, sizeof(unsigned long));
+	null_count = (unsigned long *)calloc(num_threads, sizeof(unsigned long));
+	slide_count = (unsigned long *)calloc(num_threads, sizeof(unsigned long));
+	hop_count = (unsigned long *)calloc(num_threads, sizeof(unsigned long));
 
 	pthread_t threads[num_threads];
 	pthread_attr_t attr;
 	int rc;
 	void *status;
 
-	//ad initialize barriers
+	// ad initialize barriers
 	barrier_init(&barrier_global, num_threads + 1);
 	barrier_init(&barrier, num_threads);
 
@@ -452,14 +458,14 @@ int main(int argc, char **argv)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	thread_data_t* tds = (thread_data_t*) malloc(num_threads * sizeof(thread_data_t));
+	thread_data_t *tds = (thread_data_t *)malloc(num_threads * sizeof(thread_data_t));
 
 	long t;
-	for(t = 0; t < num_threads; t++)
+	for (t = 0; t < num_threads; t++)
 	{
 		tds[t].id = t;
 		tds[t].set = set;
-		rc = pthread_create(&threads[t], &attr, test, tds + t); //ad create thread and call test function
+		rc = pthread_create(&threads[t], &attr, test, tds + t); // ad create thread and call test function
 		if (rc)
 		{
 			printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -480,7 +486,7 @@ int main(int argc, char **argv)
 	gettimeofday(&end, NULL);
 	duration = (end.tv_sec * 1000 + end.tv_usec / 1000) - (start.tv_sec * 1000 + start.tv_usec / 1000);
 
-	for(t = 0; t < num_threads; t++)
+	for (t = 0; t < num_threads; t++)
 	{
 		rc = pthread_join(threads[t], &status);
 		if (rc)
@@ -506,7 +512,7 @@ int main(int argc, char **argv)
 	volatile uint64_t removing_count_total = 0;
 	volatile uint64_t removing_count_total_succ = 0;
 
-	for(t=0; t < num_threads; t++)
+	for (t = 0; t < num_threads; t++)
 	{
 		PRINT_OPS_PER_THREAD();
 		putting_suc_total += putting_succ[t];
@@ -524,43 +530,43 @@ int main(int argc, char **argv)
 		removing_count_total_succ += removing_count_succ[t];
 	}
 
-	#if defined(COMPUTE_LATENCY)
-		printf("#thread srch_suc srch_fal insr_suc insr_fal remv_suc remv_fal   ## latency (in cycles) \n"); fflush(stdout);
-		long unsigned put_suc = putting_count_total_succ ? putting_suc_total / putting_count_total_succ : 0;
-		long unsigned put_fal = (putting_count_total - putting_count_total_succ) ? putting_fal_total / (putting_count_total - putting_count_total_succ) : 0;
-		long unsigned rem_suc = removing_count_total_succ ? removing_suc_total / removing_count_total_succ : 0;
-		long unsigned rem_fal = (removing_count_total - removing_count_total_succ) ? removing_fal_total / (removing_count_total - removing_count_total_succ) : 0;
-		printf("%-7zu %-8lu %-8lu %-8lu %-8lu %-8lu %-8lu\n", num_threads, get_suc, get_fal, put_suc, put_fal, rem_suc, rem_fal);
-	#endif
+#if defined(COMPUTE_LATENCY)
+	printf("#thread srch_suc srch_fal insr_suc insr_fal remv_suc remv_fal   ## latency (in cycles) \n");
+	fflush(stdout);
+	long unsigned put_suc = putting_count_total_succ ? putting_suc_total / putting_count_total_succ : 0;
+	long unsigned put_fal = (putting_count_total - putting_count_total_succ) ? putting_fal_total / (putting_count_total - putting_count_total_succ) : 0;
+	long unsigned rem_suc = removing_count_total_succ ? removing_suc_total / removing_count_total_succ : 0;
+	long unsigned rem_fal = (removing_count_total - removing_count_total_succ) ? removing_fal_total / (removing_count_total - removing_count_total_succ) : 0;
+	printf("%-7zu %-8lu %-8lu %-8lu %-8lu %-8lu %-8lu\n", num_threads, get_suc, get_fal, put_suc, put_fal, rem_suc, rem_fal);
+#endif
 
-	#define LLU long long unsigned int
+#define LLU long long unsigned int
 
-	int UNUSED pr = (int) (putting_count_total_succ - removing_count_total_succ);
-	#if VALIDATESIZE==1
-		if (size_after != (initial + pr))
-		{
-			printf("\n******** ERROR WRONG size. %zu + %d != %zu (difference %zu)**********\n\n", initial, pr, size_after, (initial + pr)-size_after);
-			assert(size_after == (initial + pr));
-		}
-	#endif
+	int UNUSED pr = (int)(putting_count_total_succ - removing_count_total_succ);
+#if VALIDATESIZE == 1
+	if (size_after != (initial + pr))
+	{
+		printf("\n******** ERROR WRONG size. %zu + %d != %zu (difference %zu)**********\n\n", initial, pr, size_after, (initial + pr) - size_after);
+		assert(size_after == (initial + pr));
+	}
+#endif
 	uint64_t total = putting_count_total + removing_count_total;
 	double putting_perc = 100.0 * (1 - ((double)(total - putting_count_total) / total));
-	double putting_perc_succ = (1 - (double) (putting_count_total - putting_count_total_succ) / putting_count_total) * 100;
+	double putting_perc_succ = (1 - (double)(putting_count_total - putting_count_total_succ) / putting_count_total) * 100;
 	double removing_perc = 100.0 * (1 - ((double)(total - removing_count_total) / total));
-	double removing_perc_succ = (1 - (double) (removing_count_total - removing_count_total_succ) / removing_count_total) * 100;
+	double removing_perc_succ = (1 - (double)(removing_count_total - removing_count_total_succ) / removing_count_total) * 100;
 
-	printf("putting_count_total , %-10llu \n", (LLU) putting_count_total);
-	printf("putting_count_total_succ , %-10llu \n", (LLU) putting_count_total_succ);
+	printf("putting_count_total , %-10llu \n", (LLU)putting_count_total);
+	printf("putting_count_total_succ , %-10llu \n", (LLU)putting_count_total_succ);
 	printf("putting_perc_succ , %10.1f \n", putting_perc_succ);
 	printf("putting_perc , %10.1f \n", putting_perc);
 	printf("putting_effective , %10.1f \n", (putting_perc * putting_perc_succ) / 100);
 
-	printf("removing_count_total , %-10llu \n", (LLU) removing_count_total);
-	printf("removing_count_total_succ , %-10llu \n", (LLU) removing_count_total_succ);
+	printf("removing_count_total , %-10llu \n", (LLU)removing_count_total);
+	printf("removing_count_total_succ , %-10llu \n", (LLU)removing_count_total_succ);
 	printf("removing_perc_succ , %10.1f \n", removing_perc_succ);
 	printf("removing_perc , %10.1f \n", removing_perc);
 	printf("removing_effective , %10.1f \n", (removing_perc * removing_perc_succ) / 100);
-
 
 	double throughput = (putting_count_total + removing_count_total_succ) * 1000.0 / duration;
 
@@ -582,11 +588,11 @@ int main(int argc, char **argv)
 	printf("Relaxation_bound, %zu\n", set->relaxation_bound);
 	printf("K_mode , %u\n", set->k_mode);
 
-	#ifdef RELAXATION_TIMER_ANALYSIS
-		print_relaxation_measurements(num_threads);
-	#elif RELAXATION_ANALYSIS
-		print_relaxation_measurements();
-	#endif
+#ifdef RELAXATION_TIMER_ANALYSIS
+	print_relaxation_measurements(num_threads);
+#elif RELAXATION_ANALYSIS
+	print_relaxation_measurements();
+#endif
 
 	pthread_exit(NULL);
 
