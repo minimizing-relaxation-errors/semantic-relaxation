@@ -187,7 +187,7 @@ void *test(void *thread)
 	for (i = 0; i < num_elems_thread; i++)
 	{
 		//key = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % (rand_max + 1)) + rand_min;
-		key = i << 8 | thread_id;
+		key = (i+1) << 8 | thread_id;
 		
 		if (DS_ADD(handle, key, key) == false)
 		{
