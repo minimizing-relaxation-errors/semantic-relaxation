@@ -355,12 +355,13 @@ sval_t dequeue(mqueue_t *set)
 
 			if (deq_cae(&set->get_array[thread_get_index].descriptor, &deq_descriptor, &new_deq_descriptor))
 			{
+				val = new_deq_descriptor.node->val;
 				free_node(head);
 				DEQ_END_TIMESTAMP
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
 				add_relaxed_get(val, deq_start_timestamp, deq_end_timestamp);
 #endif
-				return new_deq_descriptor.node->val;
+				return val;
 			}
 			else
 			{

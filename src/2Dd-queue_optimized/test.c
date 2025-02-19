@@ -595,6 +595,8 @@ int main(int argc, char **argv)
 
 #ifdef RELAXATION_TIMER_ANALYSIS
 	print_relaxation_measurements(num_threads);
+#elif RELAXATION_LINEARIZATION_TIMESTAMP
+	print_relaxation_measurements(num_threads, "2Ddo");
 #elif RELAXATION_ANALYSIS
 	print_relaxation_measurements();
 #endif
