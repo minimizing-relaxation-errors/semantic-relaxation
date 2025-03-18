@@ -43,7 +43,7 @@
 #define SPECIFIC_TEST_LOOP() TEST_LOOP_ONLY_UPDATES()
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-#include "relaxation_linearization_timetamps.h"
+#include "relaxation_linearization_timestamps.h"
 #endif
 
 /* ################################################################### *

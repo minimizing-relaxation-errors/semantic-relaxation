@@ -1,4 +1,4 @@
-#include "relaxation_linearization_timetamps.h"
+#include "relaxation_linearization_timestamps.h"
 
 // Thread local arrays for storing records
 __thread relax_stamp_t *thread_put_stamps;
