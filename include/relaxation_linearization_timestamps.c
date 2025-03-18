@@ -16,7 +16,7 @@ size_t **shared_get_stamps_ind; // Array of pointers, to make it more thread loc
 uint64_t get_timestamp()
 {
     struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);            // Get the current time
+    clock_gettime(CLOCK_MONOTONIC, &ts);            // Get the current time
     return (uint64_t)ts.tv_sec * 1e9 + ts.tv_nsec; // Convert seconds and nanoseconds to a single 64-bit number
 }
 
