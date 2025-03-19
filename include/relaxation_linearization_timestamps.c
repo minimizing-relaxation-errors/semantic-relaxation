@@ -16,7 +16,7 @@ size_t **shared_get_stamps_ind; // Array of pointers, to make it more thread loc
 uint64_t get_timestamp()
 {
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);       // Get the current time
+    clock_gettime(CLOCK_MONOTONIC, &ts);       // Get the current time
     return (uint64_t)ts.tv_sec * 1e9 + ts.tv_nsec; // Convert seconds and nanoseconds to a single 64-bit number
 }
 
@@ -219,7 +219,7 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
 
     char filename[62]; // Exact name size
     // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%llu.csv", queue, get_timestamp());
+    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, get_timestamp());
 
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
@@ -232,9 +232,9 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
     for (int i = 0; i < nbr_threads; i++)
     {
         for (int j = 0; j < *shared_put_stamps_ind[i]; j++)
-            fprintf(fptr, "%i,%li,PUT,%llu,%llu\n", i, shared_put_stamps[i][j].value, shared_put_stamps[i][j].start, shared_put_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
+            fprintf(fptr, "%i,%li,PUT,%lu,%lu\n", i, shared_put_stamps[i][j].value, shared_put_stamps[i][j].start, shared_put_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
         for (int j = 0; j < *shared_get_stamps_ind[i]; j++)
-            fprintf(fptr, "%i,%li,GET,%llu,%llu\n", i, shared_get_stamps[i][j].value, shared_get_stamps[i][j].start, shared_get_stamps[i][j].end);
+            fprintf(fptr, "%i,%li,GET,%lu,%lu\n", i, shared_get_stamps[i][j].value, shared_get_stamps[i][j].start, shared_get_stamps[i][j].end);
     }
 
     fclose(fptr); // Close the file

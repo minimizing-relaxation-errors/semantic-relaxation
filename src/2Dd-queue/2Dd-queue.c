@@ -10,8 +10,10 @@
 #endif
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-uint64_t enq_start_timestamp, enq_end_timestamp;
-uint64_t deq_start_timestamp, deq_end_timestamp;
+__thread uint64_t enq_start_timestamp;
+__thread uint64_t enq_end_timestamp;
+__thread uint64_t deq_start_timestamp;
+__thread uint64_t deq_end_timestamp;
 #define ENQ_START_TIMESTAMP (enq_start_timestamp = get_timestamp());
 #define ENQ_END_TIMESTAMP (enq_end_timestamp = get_timestamp());
 #define DEQ_START_TIMESTAMP (deq_start_timestamp = get_timestamp());
