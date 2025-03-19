@@ -18,8 +18,10 @@ uint64_t enq_timestamp, deq_timestamp;
 #define ENQ_START_TIMESTAMP
 #define ENQ_END_TIMESTAMP
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-uint64_t enq_start_timestamp, enq_end_timestamp;
-uint64_t deq_start_timestamp, deq_end_timestamp;
+__thread uint64_t enq_start_timestamp;
+__thread uint64_t enq_end_timestamp;
+__thread uint64_t deq_start_timestamp;
+__thread uint64_t deq_end_timestamp;
 #define ENQ_START_TIMESTAMP (enq_start_timestamp = get_timestamp());
 #define ENQ_END_TIMESTAMP (enq_end_timestamp = get_timestamp());
 #define DEQ_START_TIMESTAMP (deq_start_timestamp = get_timestamp());
@@ -246,10 +248,13 @@ faaaq_t *create_faaaq_queue(int thread_id)
 size_t faaaq_queue_size(faaaq_t *q)
 {
     size_t size = 0;
-    segment_t* node = q->head;
-    while (node) {
-        for (int idx = 0; idx < BUFFER_SIZE; idx += 1) {
-            if (node->items[idx] != EMPTY && node->items[idx] != TAKEN) {
+    segment_t *node = q->head;
+    while (node)
+    {
+        for (int idx = 0; idx < BUFFER_SIZE; idx += 1)
+        {
+            if (node->items[idx] != EMPTY && node->items[idx] != TAKEN)
+            {
                 size += 1;
             }
         }
