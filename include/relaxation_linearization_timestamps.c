@@ -37,11 +37,11 @@ void add_relaxed_put(sval_t val, uint64_t start, uint64_t end)
 }
 
 // Add a get operation of a value with its timestamp
-void add_relaxed_get(sval_t val, uint64_t timestamp1, uint64_t timestamp2)
+void add_relaxed_get(sval_t val, uint64_t start, uint64_t end)
 {
     relax_stamp_t stamp;
-    stamp.end = timestamp1;
-    stamp.start = timestamp2;
+    stamp.end = end;
+    stamp.start = start;
     stamp.value = val;
     thread_get_stamps[*thread_get_stamps_ind] = stamp;
     *thread_get_stamps_ind += 1;
