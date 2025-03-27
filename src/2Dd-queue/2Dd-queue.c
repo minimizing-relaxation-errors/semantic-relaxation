@@ -10,6 +10,9 @@
 #endif
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+__thread uint64_t enq_timestamp, deq_timestamp;
+#define ENQ_TIMESTAMP (enq_timestamp = get_timestamp());
+#define DEQ_TIMESTAMP (deq_timestamp = get_timestamp());
 __thread uint64_t enq_start_timestamp;
 __thread uint64_t enq_end_timestamp;
 __thread uint64_t deq_start_timestamp;
@@ -19,6 +22,8 @@ __thread uint64_t deq_end_timestamp;
 #define DEQ_START_TIMESTAMP (deq_start_timestamp = get_timestamp());
 #define DEQ_END_TIMESTAMP (deq_end_timestamp = get_timestamp());
 #else
+#define ENQ_TIMESTAMP
+#define DEQ_TIMESTAMP
 #define ENQ_START_TIMESTAMP
 #define ENQ_END_TIMESTAMP
 #define DEQ_START_TIMESTAMP
@@ -186,6 +191,7 @@ static int enq_cas(node_t *volatile *next_loc, node_t *new_node)
 	}
 
 #else
+    ENQ_TIMESTAMP;
 	return CAS(next_loc, NULL, new_node);
 #endif
 }
@@ -208,6 +214,7 @@ static int deq_cae(volatile descriptor_t *des_loc, descriptor_t *read_des_loc, d
 	}
 
 #else
+    DEQ_TIMESTAMP;
 	return CAE(des_loc, read_des_loc, new_des_loc);
 #endif
 }
@@ -265,7 +272,7 @@ int enqueue(mqueue_t *set, skey_t key, sval_t val)
 	ENQ_END_TIMESTAMP;
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-	add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp);
+	add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
 #endif
 
 	return 1;
@@ -315,7 +322,7 @@ sval_t dequeue(mqueue_t *set)
 				free_node(head);
 				DEQ_END_TIMESTAMP
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-				add_relaxed_get(val, deq_start_timestamp, deq_end_timestamp);
+				add_relaxed_get(val, deq_start_timestamp, deq_end_timestamp, deq_timestamp);
 #endif
 				return val;
 			}

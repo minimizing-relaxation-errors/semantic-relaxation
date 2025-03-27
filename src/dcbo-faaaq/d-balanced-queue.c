@@ -5,6 +5,7 @@
 #endif
 
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+extern __thread uint64_t enq_timestamp, deq_timestamp;
 __thread uint64_t enq_start_timestamp;
 __thread uint64_t enq_end_timestamp;
 __thread uint64_t deq_start_timestamp;
@@ -47,7 +48,7 @@ int enqueue(mqueue_t *set, skey_t key, sval_t val)
     }
     ENQ_END_TIMESTAMP;
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp);
+    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
 #endif
     return PARTIAL_ENQUEUE(&set->queues[opt_index], key, val);
 }
@@ -79,7 +80,7 @@ sval_t dequeue(mqueue_t *set)
     {
         DEQ_END_TIMESTAMP;
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-        add_relaxed_get(v, deq_start_timestamp, deq_end_timestamp);
+        add_relaxed_get(v, deq_start_timestamp, deq_end_timestamp, deq_timestamp);
 #endif
         return v;
     }
@@ -104,7 +105,7 @@ start:
         {
             DEQ_END_TIMESTAMP;
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-            add_relaxed_get(v, deq_start_timestamp, deq_end_timestamp);
+            add_relaxed_get(v, deq_start_timestamp, deq_end_timestamp, deq_timestamp);
 #endif
             return v;
         }
