@@ -222,7 +222,8 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
 
     char filename[62]; // Exact name size
     // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, get_timestamp());
+    unsigned long int timestamp = get_timestamp();
+    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, timestamp);
 
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
@@ -230,9 +231,6 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
         perror("Error opening file");
         return;
     }
-
-    fprintf(fptr, "Total rank error from linearization points: %lu\n", rank_error_sum);
-    fprintf(fptr, "Max rank error from linearization points: %lu\n", rank_error_max);
 
     // Print PUT and GET time stamps for operations across all threads
     for (int i = 0; i < nbr_threads; i++)
@@ -255,6 +253,26 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
     rank_error_variance /= tot_get - 1;
 
     printf("variance_relaxation , %.4Lf\n", rank_error_variance);
+
+    // Print relaxation measurements to another file
+
+    FILE *fptr_k;
+
+    char filename_k[100];
+    snprintf(filename_k, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.txt", queue, timestamp);
+    fptr_k = fopen(filename_k, "w+");
+    if (fptr_k == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    fprintf(fptr_k, "Total rank error from linearization points: %lu\n", rank_error_sum);
+    fprintf(fptr_k, "Max rank error from linearization points: %lu\n", rank_error_max);
+    fprintf(fptr_k, "Mean rank error from linearization points: %lu\n", rank_error_mean);
+    fprintf(fptr_k, "Rank error variance from linearization points: %lu\n", rank_error_variance);
+
+    fclose(fptr_k);
 
     // Free everything used, as well as all earlier used relaxation analysis things
     free(item_list);
