@@ -269,8 +269,8 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
 
     fprintf(fptr_k, "Total rank error from linearization points: %lu\n", rank_error_sum);
     fprintf(fptr_k, "Max rank error from linearization points: %lu\n", rank_error_max);
-    fprintf(fptr_k, "Mean rank error from linearization points: %lu\n", rank_error_mean);
-    fprintf(fptr_k, "Rank error variance from linearization points: %lu\n", rank_error_variance);
+    fprintf(fptr_k, "Mean rank error from linearization points: %Lf\n", rank_error_mean);
+    fprintf(fptr_k, "Rank error variance from linearization points: %Lf\n", rank_error_variance);
 
     fclose(fptr_k);
 
