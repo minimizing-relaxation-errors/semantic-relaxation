@@ -255,24 +255,47 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
     printf("variance_relaxation , %.4Lf\n", rank_error_variance);
 
     // Print relaxation measurements to another file
+    FILE *fptr_k_res;
 
-    FILE *fptr_k;
-
-    char filename_k[100];
-    snprintf(filename_k, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.txt", queue, timestamp);
-    fptr_k = fopen(filename_k, "w+");
-    if (fptr_k == NULL)
+    char filename_k_res[100];
+    snprintf(filename_k_res, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.txt", queue, timestamp);
+    fptr_k_res = fopen(filename_k_res, "w+");
+    if (fptr_k_res == NULL)
     {
         perror("Error opening file");
         return;
     }
 
-    fprintf(fptr_k, "Total rank error from linearization points: %lu\n", rank_error_sum);
-    fprintf(fptr_k, "Max rank error from linearization points: %lu\n", rank_error_max);
-    fprintf(fptr_k, "Mean rank error from linearization points: %Lf\n", rank_error_mean);
-    fprintf(fptr_k, "Rank error variance from linearization points: %Lf\n", rank_error_variance);
+    fprintf(fptr_k_res, "Total rank error from linearization points: %lu\n", rank_error_sum);
+    fprintf(fptr_k_res, "Max rank error from linearization points: %lu\n", rank_error_max);
+    fprintf(fptr_k_res, "Mean rank error from linearization points: %Lf\n", rank_error_mean);
+    fprintf(fptr_k_res, "Rank error variance from linearization points: %Lf\n", rank_error_variance);
 
-    fclose(fptr_k);
+    fclose(fptr_k_res);
+
+    
+    //  Print linearization points to file
+    FILE *fptr_k_points;
+
+    char filename_k_points[100];
+    snprintf(filename_k_points, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.csv", queue, timestamp);
+    fptr_k_points = fopen(filename_k_points, "w+");
+    if (fptr_k_points == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    // Print PUT and GET time stamps for operations across all threads
+    for (int i = 0; i < nbr_threads; i++)
+    {
+        for (int j = 0; j < *shared_put_stamps_ind[i]; j++)
+            fprintf(fptr, "%i,%li,PUT,%lu\n", i, shared_put_stamps[i][j].value, shared_put_stamps[i][j].lin); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
+        for (int j = 0; j < *shared_get_stamps_ind[i]; j++)
+            fprintf(fptr, "%i,%li,GET,%lu\n", i, shared_get_stamps[i][j].value, shared_get_stamps[i][j].lin);
+    }
+
+    fclose(fptr_k_points); // Close the file
 
     // Free everything used, as well as all earlier used relaxation analysis things
     free(item_list);
