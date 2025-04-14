@@ -46,11 +46,12 @@ int enqueue(mqueue_t *set, skey_t key, sval_t val)
             opt = index_val;
         }
     }
+    int ret =  PARTIAL_ENQUEUE(&set->queues[opt_index], key, val);
     ENQ_END_TIMESTAMP;
-#ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
-#endif
-    return PARTIAL_ENQUEUE(&set->queues[opt_index], key, val);
+    #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
+        add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
+    #endif
+    return ret;
 }
 
 sval_t dequeue(mqueue_t *set)
