@@ -18,6 +18,9 @@ uint64_t enq_timestamp, deq_timestamp;
 #define ENQ_START_TIMESTAMP
 #define ENQ_END_TIMESTAMP
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
+__thread uint64_t enq_timestamp, deq_timestamp;
+#define ENQ_TIMESTAMP (enq_timestamp = get_timestamp());
+#define DEQ_TIMESTAMP (deq_timestamp = get_timestamp());
 __thread uint64_t enq_start_timestamp;
 __thread uint64_t enq_end_timestamp;
 __thread uint64_t deq_start_timestamp;
@@ -26,8 +29,6 @@ __thread uint64_t deq_end_timestamp;
 #define ENQ_END_TIMESTAMP (enq_end_timestamp = get_timestamp());
 #define DEQ_START_TIMESTAMP (deq_start_timestamp = get_timestamp());
 #define DEQ_END_TIMESTAMP (deq_end_timestamp = get_timestamp());
-#define ENQ_TIMESTAMP
-#define DEQ_TIMESTAMP
 #else
 #define ENQ_TIMESTAMP
 #define DEQ_TIMESTAMP
@@ -74,7 +75,7 @@ static int enq_cae(volatile sval_t *item_loc, sval_t new_value)
     if (CAE(item_loc, &expected, &new_value))
     {
         // Save this count in a local array of (timestamp, )
-        add_relaxed_put(new_value, enq_start_timestamp, enq_end_timestamp);
+        add_relaxed_put(new_value, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
         return true;
     }
     return false;
@@ -151,7 +152,7 @@ int faaaq_enqueue(faaaq_t *q, skey_t key, sval_t val)
 #ifdef RELAXATION_TIMER_ANALYSIS
                     add_relaxed_put(val, enq_timestamp);
 #elif RELAXATION_LINEARIZATION_TIMESTAMP
-                    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp);
+                    add_relaxed_put(val, enq_start_timestamp, enq_end_timestamp, enq_timestamp);
 #endif
 
                     return 1;
@@ -203,7 +204,7 @@ sval_t faaaq_dequeue(faaaq_t *q, uint64_t *double_collect_count)
         { // och en timestamp innan return
             DEQ_END_TIMESTAMP;
 #ifdef RELAXATION_LINEARIZATION_TIMESTAMP
-            add_relaxed_get(item, deq_start_timestamp, deq_end_timestamp);
+            add_relaxed_get(item, deq_start_timestamp, deq_end_timestamp, deq_timestamp);
 #endif
             return item;
         }

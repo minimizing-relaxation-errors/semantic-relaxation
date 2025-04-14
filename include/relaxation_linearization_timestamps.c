@@ -21,11 +21,12 @@ uint64_t get_timestamp()
 }
 
 // Add a put operation of a value with its timestamp
-void add_relaxed_put(sval_t val, uint64_t start, uint64_t end)
+void add_relaxed_put(sval_t val, uint64_t start, uint64_t end, uint64_t lin)
 {
     relax_stamp_t stamp;
     stamp.start = start;
     stamp.end = end;
+    stamp.lin = lin;
     stamp.value = val;
     thread_put_stamps[*thread_put_stamps_ind] = stamp;
     *thread_put_stamps_ind += 1;
@@ -37,11 +38,12 @@ void add_relaxed_put(sval_t val, uint64_t start, uint64_t end)
 }
 
 // Add a get operation of a value with its timestamp
-void add_relaxed_get(sval_t val, uint64_t start, uint64_t end)
+void add_relaxed_get(sval_t val, uint64_t start, uint64_t end, uint64_t lin)
 {
     relax_stamp_t stamp;
     stamp.end = end;
     stamp.start = start;
+    stamp.lin = lin;
     stamp.value = val;
     thread_get_stamps[*thread_get_stamps_ind] = stamp;
     *thread_get_stamps_ind += 1;
@@ -100,9 +102,9 @@ int compare_timestamps(const void *a, const void *b)
 {
     const relax_stamp_t *stamp1 = (const relax_stamp_t *)a;
     const relax_stamp_t *stamp2 = (const relax_stamp_t *)b;
-    if (stamp1->start < stamp2->start)
+    if (stamp1->lin < stamp2->lin)
         return -1;
-    if (stamp1->start > stamp2->start)
+    if (stamp1->lin > stamp2->lin)
         return 1;
     return 0;
 }
@@ -214,15 +216,40 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
     printf("mean_relaxation , %.4Lf\n", rank_error_mean);
     printf("max_relaxation , %zu\n", rank_error_max);
 
+     // Find variance
+     long double rank_error_variance = 0;
+     for (size_t deq_ind; deq_ind < tot_get; deq_ind += 1)
+     {
+         long double off = (long double)combined_get_stamps[deq_ind].value - rank_error_mean;
+         rank_error_variance += off * off;
+     }
+     rank_error_variance /= tot_get - 1;
+ 
+     printf("variance_relaxation , %.4Lf\n", rank_error_variance);
+
+    // "TIMESTAMP EXTRACTION"
+    // Saves timestamp start and end data to one .csv file and timestamp "linearization point" to another .csv file
+    // And relaxation error from "linearization point" is written to a .txt file
+
+    // For start and end file:
     FILE *fptr;
     //  Create a file
-
     char filename[62]; // Exact name size
-    // Assumes there is a timestamps folder in base folder and that you run code from base folder
-    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, get_timestamp());
-
+    unsigned long int timestamp = get_timestamp();
+    snprintf(filename, 62, "../LinTool/timestamps/%s-timestamps-%lu.csv", queue, timestamp);
     fptr = fopen(filename, "w+");
     if (fptr == NULL)
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    // For "linearization point" file
+    FILE *fptr_k_points;
+    char filename_k_points[100];
+    snprintf(filename_k_points, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.csv", queue, timestamp);
+    fptr_k_points = fopen(filename_k_points, "w+");
+    if (fptr_k_points == NULL)
     {
         perror("Error opening file");
         return;
@@ -231,24 +258,34 @@ void print_relaxation_measurements(int nbr_threads, char queue[4])
     // Print PUT and GET time stamps for operations across all threads
     for (int i = 0; i < nbr_threads; i++)
     {
-        for (int j = 0; j < *shared_put_stamps_ind[i]; j++)
+        for (int j = 0; j < *shared_put_stamps_ind[i]; j++){
             fprintf(fptr, "%i,%li,PUT,%lu,%lu\n", i, shared_put_stamps[i][j].value, shared_put_stamps[i][j].start, shared_put_stamps[i][j].end); // Kanske egentligen bättre att concatenatea strings och sedan printa string i slutet
-        for (int j = 0; j < *shared_get_stamps_ind[i]; j++)
+            fprintf(fptr_k_points, "%i,%li,PUT,%lu\n", i, shared_put_stamps[i][j].value, shared_put_stamps[i][j].lin);
+        }
+            for (int j = 0; j < *shared_get_stamps_ind[i]; j++){
             fprintf(fptr, "%i,%li,GET,%lu,%lu\n", i, shared_get_stamps[i][j].value, shared_get_stamps[i][j].start, shared_get_stamps[i][j].end);
+            fprintf(fptr_k_points, "%i,%li,GET,%lu\n", i, shared_get_stamps[i][j].value, shared_get_stamps[i][j].lin);
+        }
     }
 
-    fclose(fptr); // Close the file
-
-    // Find variance
-    long double rank_error_variance = 0;
-    for (size_t deq_ind; deq_ind < tot_get; deq_ind += 1)
+    fclose(fptr); // Close start and end file
+    fclose(fptr_k_points); // Close the file
+   
+    // Print relaxation measurements to .txt file
+    FILE *fptr_k_res;
+    char filename_k_res[100];
+    snprintf(filename_k_res, 100, "../LinTool/current_linearization_results/%s-timestamps-%lu.txt", queue, timestamp);
+    fptr_k_res = fopen(filename_k_res, "w+");
+    if (fptr_k_res == NULL)
     {
-        long double off = (long double)combined_get_stamps[deq_ind].value - rank_error_mean;
-        rank_error_variance += off * off;
+        perror("Error opening file");
+        return;
     }
-    rank_error_variance /= tot_get - 1;
-
-    printf("variance_relaxation , %.4Lf\n", rank_error_variance);
+    fprintf(fptr_k_res, "Total rank error from linearization points: %lu\n", rank_error_sum);
+    fprintf(fptr_k_res, "Max rank error from linearization points: %lu\n", rank_error_max);
+    fprintf(fptr_k_res, "Mean rank error from linearization points: %Lf\n", rank_error_mean);
+    fprintf(fptr_k_res, "Rank error variance from linearization points: %Lf\n", rank_error_variance);
+    fclose(fptr_k_res);
 
     // Free everything used, as well as all earlier used relaxation analysis things
     free(item_list);
